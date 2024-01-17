@@ -1,0 +1,3 @@
+cmake-build-*/
+/.idea/runConfigurations/example_elf.xml
+/.idea/runConfigurations/OCD_example.xml
