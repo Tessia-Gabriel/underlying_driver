@@ -22,18 +22,21 @@
 #include "main.h"
 
 
+const float MOTOR_6020_MAX_SPEED = 320.0f;
 const float MOTOR_3508_MAX_SPEED = 9600.0f;
 const float MOTOR_2006_MAX_SPEED = 21000.0f;
 const float ENCODER_ANGLE_RATIO = 22.755555555555556f;     //(8192.0f / 360.0f)
 const float ENCODER_TO_ANGLE_RATIO = 0.0439453125f;        // 360/8192.0
 const float ENCODER_MAX = 8192.0f;
 const float ENCODER_TO_ROUND = 1.0f/8192.0f;
+const float MOTOR_6020_MAX_CURRENT = 16384;                //16384 for M3508
 const float MOTOR_3508_MAX_CURRENT = 16384;                //16384 for M3508
 const float MOTOR_2006_MAX_CURRENT = 10000;
 
 enum DJI_MOTOR_TYPE {
     DJI_M3508 = 0, //默认为
     DJI_M2006 = 1,
+    DJI_GM6020 = 2, ///推荐id为5、6、7
 };
 enum DJI_CMD {
     DJI_MOTOR_CLEAR_PID = 200,
@@ -61,7 +64,7 @@ class DJI_motor : public motor_dev {
 public:
     /***--------------------------初始化时用------------------------------***/
     DJI_motor(CAN_HandleTypeDef *hcan_=&hcan1, can_rx_callback *callback_ = nullptr,
-            uint32_t id_motor = 1, DJI_MOTOR_TYPE mode_ = DJI_M3508, uint8_t is_reverse = 0);
+            uint32_t id_motor = 1, DJI_MOTOR_TYPE type_ = DJI_M3508, uint8_t is_reverse = 0);
 
     /***--------------------------指令------------------------------***/
     bool motor_reset() override;                             //复位

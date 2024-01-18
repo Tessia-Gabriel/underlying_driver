@@ -39,6 +39,7 @@ class can_device_receive {
 public:
     can_device_receive(CAN_HandleTypeDef *hcan_=&hcan1, uint32_t id_=0, can_rx_callback *callback_ = nullptr);
     bool can_set_callback(can_rx_callback *callback_);
+    void can_modify_id(uint32_t id_);
 
 private:
     CAN_HandleTypeDef *hcan;    //通过函数传递的参数

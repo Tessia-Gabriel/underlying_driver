@@ -13,10 +13,10 @@ CAN_FilterTypeDef filter_cfg = {
         .FilterActivation = ENABLE,
         .SlaveStartFilterBank = 14
 };
-uint32_t can1_filter[4] = {0};
+uint32_t can1_filter[14][4] = {0};
 uint32_t can1_device_num = 0;
 
-uint32_t can2_filter[4] = {0};
+uint32_t can2_filter[14][4] = {0};
 uint32_t can2_device_num = 0;
 
 
@@ -132,30 +132,24 @@ can_device_receive::can_device_receive(CAN_HandleTypeDef *hcan_, uint32_t id_, c
         this->index = can1_device_num;
         can1_device_num++;
         filter_cfg.FilterBank = this->index / 4;
-        can1_filter[this->index % 4] = this->id;
-        filter_cfg.FilterIdLow = can1_filter[0] << 5;
-        filter_cfg.FilterMaskIdLow = can1_filter[1] << 5;
-        filter_cfg.FilterIdHigh = can1_filter[2] << 5;
-        filter_cfg.FilterMaskIdHigh = can1_filter[3] << 5;
+        can1_filter[this->index / 4][this->index % 4] = this->id;
+        filter_cfg.FilterIdLow = can1_filter[this->index / 4][0] << 5;
+        filter_cfg.FilterMaskIdLow = can1_filter[this->index / 4][1] << 5;
+        filter_cfg.FilterIdHigh = can1_filter[this->index / 4][2] << 5;
+        filter_cfg.FilterMaskIdHigh = can1_filter[this->index / 4][3] << 5;
         HAL_CAN_ConfigFilter(&hcan1, &filter_cfg);
-        if (3 == this->index % 4) {
-            memset(can1_filter, 0, sizeof(can1_filter));
-        }
         can_device_rx_list[0][this->index] = this;
     } else if (hcan == &hcan2 && can2_device_num < MAX_CAN_DEV_NUM) {
         filter_cfg.FilterFIFOAssignment = CAN_RX_FIFO1;
         this->index = can2_device_num;
         can2_device_num++;
         filter_cfg.FilterBank = this->index / 4 + 14;
-        can2_filter[this->index % 4] = this->id;
-        filter_cfg.FilterIdLow = can2_filter[0] << 5;//0
-        filter_cfg.FilterMaskIdLow = can2_filter[1] << 5;//1
-        filter_cfg.FilterIdHigh = can2_filter[2] << 5;//2
-        filter_cfg.FilterMaskIdHigh = can2_filter[3] << 5;//3
+        can2_filter[this->index / 4][this->index % 4] = this->id;
+        filter_cfg.FilterIdLow = can2_filter[this->index / 4][0] << 5;//0
+        filter_cfg.FilterMaskIdLow = can2_filter[this->index / 4][1] << 5;//1
+        filter_cfg.FilterIdHigh = can2_filter[this->index / 4][2] << 5;//2
+        filter_cfg.FilterMaskIdHigh = can2_filter[this->index / 4][3] << 5;//3
         HAL_CAN_ConfigFilter(&hcan2, &filter_cfg);
-        if (3 == this->index % 4) {
-            memset(can2_filter, 0, sizeof(can2_filter));
-        }
         can_device_rx_list[1][this->index] = this;
     }
     taskEXIT_CRITICAL();
@@ -169,6 +163,37 @@ bool can_device_receive::can_set_callback(can_rx_callback *callback_) {
     } else{
         return false;
     }
+}
+
+
+void can_device_receive::can_modify_id(uint32_t id_){
+    id = id_;
+    taskENTER_CRITICAL();
+    if (hcan == &hcan1) {
+        filter_cfg.FilterFIFOAssignment = CAN_RX_FIFO0;
+        filter_cfg.FilterBank = this->index / 4;
+        can1_filter[this->index / 4][this->index % 4] = this->id;
+        filter_cfg.FilterIdLow = can1_filter[this->index / 4][0] << 5;
+        filter_cfg.FilterMaskIdLow = can1_filter[this->index / 4][1] << 5;
+        filter_cfg.FilterIdHigh = can1_filter[this->index / 4][2] << 5;
+        filter_cfg.FilterMaskIdHigh = can1_filter[this->index / 4][3] << 5;
+        HAL_CAN_ConfigFilter(&hcan1, &filter_cfg);
+        can_device_rx_list[0][this->index] = this;
+    } else if (hcan == &hcan2) {
+        filter_cfg.FilterFIFOAssignment = CAN_RX_FIFO1;
+        filter_cfg.FilterBank = this->index / 4 + 14;
+        can2_filter[this->index / 4][this->index % 4] = this->id;
+        filter_cfg.FilterIdLow = can2_filter[this->index / 4][0] << 5;//0
+        filter_cfg.FilterMaskIdLow = can2_filter[this->index / 4][1] << 5;//1
+        filter_cfg.FilterIdHigh = can2_filter[this->index / 4][2] << 5;//2
+        filter_cfg.FilterMaskIdHigh = can2_filter[this->index / 4][3] << 5;//3
+        HAL_CAN_ConfigFilter(&hcan2, &filter_cfg);
+        if (3 == this->index % 4) {
+            memset(can2_filter, 0, sizeof(can2_filter));
+        }
+        can_device_rx_list[1][this->index] = this;
+    }
+    taskEXIT_CRITICAL();
 }
 
 

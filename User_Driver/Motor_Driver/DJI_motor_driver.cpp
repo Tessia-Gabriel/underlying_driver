@@ -21,26 +21,32 @@ typedef struct dji_can_tx {
 
 dji_motor_can_tx_t can_tx_list[] = {{&hcan1, 0x200, 0,},
                                     {&hcan1, 0x1ff, 0,},
+                                    {&hcan1, 0x2ff, 0,},
                                     {&hcan2, 0x200, 0,},
-                                    {&hcan2, 0x1ff, 0,}};
+                                    {&hcan2, 0x1ff, 0,},
+                                    {&hcan2, 0x2ff, 0,}
+};
 
 void dji_motor_data_update_callback(can_device_receive *can_receive, uint8_t *data);
 
 DJI_motor::DJI_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_,
-                     uint32_t id_motor, DJI_MOTOR_TYPE mode_, uint8_t is_reverse)
+                     uint32_t id_motor, DJI_MOTOR_TYPE type_, uint8_t is_reverse)
                      :can_rx_data{},motor_data{},
-                      type(mode_),current_to_send(0),bias_ordinal(0),
+                      type(type_),current_to_send(0),bias_ordinal(0),
                       cmd(DJI_MOTOR_RESET_OFFSET),init_offset_f(false),is_id_false(false),
 
-                      can_rx(hcan_,0x200+id_motor,callback_),
-                      can_tx(hcan_,id_motor<=4?0x200:0x1ff),
+                      can_rx(hcan_,(type_==DJI_M3508||type_==DJI_M2006)?0x200+id_motor:0x204+id_motor,callback_),
+                      can_tx(hcan_,(type_==DJI_M3508||type_==DJI_M2006)?(id_motor<=4?0x200:0x1ff):(id_motor<=4?0x1fe:0x2fe)),
                       velPid(0.5f, 0.1f, 10, 0.002f, 0.1f),
                       posPid(0.2f,0.1f,0.3f,0.f,0.f) {
 
     reverse = is_reverse; //父类继承的protected似乎无法在列表中初始化
 
     id_motor>0&&id_motor<9 ? id = id_motor : is_id_false = 1;
+    type==DJI_GM6020?(id_motor==8?is_id_false=1:id=id_motor):id=id_motor;
+
     callback_ == nullptr ? can_rx.can_set_callback(dji_motor_data_update_callback) : can_rx.can_set_callback(callback_);
+
 
     while (init_offset_f!=1){
         osDelay(1);//在这里停止
@@ -48,20 +54,26 @@ DJI_motor::DJI_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_,
 
     dji_motor_can_tx_t *tx;
     if(hcan_==&hcan1){
-        if(id < 5){
+        if(can_tx.member.id == 0x200){
             tx = &can_tx_list[0];
             can_tx_data = can_tx_list[0].buf;
-        } else{
+        } else if(can_tx.member.id == 0x1ff){
             tx = &can_tx_list[1];
             can_tx_data = can_tx_list[1].buf;
-        }
-    }else{
-        if(id < 5){
+        }else{
             tx = &can_tx_list[2];
             can_tx_data = can_tx_list[2].buf;
-        } else{
+        }
+    }else{
+        if(can_tx.member.id == 0x200){
             tx = &can_tx_list[3];
             can_tx_data = can_tx_list[3].buf;
+        } else if(can_tx.member.id == 0x1ff){
+            tx = &can_tx_list[4];
+            can_tx_data = can_tx_list[4].buf;
+        }else{
+            tx = &can_tx_list[5];
+            can_tx_data = can_tx_list[5].buf;
         }
     }
     tx->enable = 1;
@@ -156,6 +168,9 @@ void DJI_motor::motor_set_current_forward(float current) {
         case DJI_M2006:
             current_to_send=(int16_t)(current * MOTOR_2006_MAX_CURRENT);
             break;
+        case DJI_GM6020:
+            current_to_send=(int16_t)(current * MOTOR_6020_MAX_CURRENT);
+            break;
     }
     dji_motor_can_tx_write();
 }
@@ -170,20 +185,16 @@ void DJI_motor::motor_set_speed_forward(float speed) {
         case DJI_M2006:
             velPid.pid_calculate(speed, (float)(motor_get_speed_forward()) / MOTOR_2006_MAX_SPEED);
             break;
+        case DJI_GM6020:
+            velPid.pid_calculate(speed, (float)(motor_get_speed_forward()) / MOTOR_6020_MAX_SPEED);
+            break;
     }
     motor_set_current_forward(velPid.out);
 }
 
 
 void DJI_motor::motor_set_rounds_forward(float rounds) {
-    switch(type){
-        case DJI_M3508:
-            posPid.pid_calculate(rounds, (float)(motor_get_rounds_forward()));
-            break;
-        case DJI_M2006:
-            posPid.pid_calculate(rounds, (float)(motor_get_rounds_forward()));
-            break;
-    }
+    posPid.pid_calculate(rounds, (float)(motor_get_rounds_forward()));
     motor_set_speed_forward(posPid.out);
 }
 
@@ -215,7 +226,7 @@ void DJI_motor_service(void *argument) {
     uint32_t tick = osKernelGetTickCount();
     can_device_transmit msg;
     for(;;){
-        for(int i = 0;i<4;i++){
+        for(int i = 0;i<6;i++){
             if(can_tx_list[i].enable){
                 msg.member.hcan = can_tx_list[i].can_handle;
                 msg.member.id = can_tx_list[i].id;
