@@ -41,6 +41,7 @@ enum DJI_MOTOR_TYPE {
 enum DJI_CMD {
     DJI_MOTOR_CLEAR_PID = 200,
     DJI_MOTOR_RESET_OFFSET,
+    DJI_MOTOR_DISABLE_OFFSET,   //适用于6020，因为其为绝对值编码器
 };
 
 struct dji_motor_data {

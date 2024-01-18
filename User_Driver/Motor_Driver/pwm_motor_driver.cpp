@@ -13,24 +13,28 @@
 #include "pwm_motor_driver.h"
 
 pwm_motor::pwm_motor(TIM_HandleTypeDef *tim_, uint32_t tim_channel_)
-          :tim(tim_),tim_channel(tim_channel_),pwmVal(0),motor_speed(0){
+          :tim(tim_),tim_channel(tim_channel_),pwmVal(0),motor_speed(0),duty_cycle(0.5){
     Prescaler = tim->Init.Prescaler;
     Period = tim->Init.Period;
 
     HAL_TIM_PWM_Start(tim, tim_channel);
-    motor_set_speed_forward(0);
+    //校准需要
+    modify_duty_cycle(duty_cycle);
+    osDelay(1000); //todo：无法同时校准，有时间改改，现在问题不大
 }
 
 
-void pwm_motor::modify_duty_cycle(float duty_cycle){
-    pwmVal = (uint32_t)(duty_cycle * Period);
+//占空比只能大于0.5
+void pwm_motor::modify_duty_cycle(float duty_cycle_){
+    pwmVal = (uint32_t)(duty_cycle_ * Period);
     __HAL_TIM_SetCompare(tim, tim_channel, pwmVal);
 }
 
 void pwm_motor::motor_set_speed_forward(float speed){
     speed = fabs(speed);
     motor_speed = speed;
-    modify_duty_cycle(speed);
+    duty_cycle = 0.5 + speed * 0.5;
+    modify_duty_cycle(duty_cycle);
 }
 
 float pwm_motor::motor_get_speed_forward(){

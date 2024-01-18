@@ -24,7 +24,7 @@ void motor_dev::motor_set_current(float current) {
     if(reverse == 1){
         motor_set_current_forward(-current);
     } else{
-        motor_set_speed_forward(current);
+        motor_set_current_forward(current);
     }
 }
 

@@ -43,7 +43,7 @@ DJI_motor::DJI_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_,
     reverse = is_reverse; //父类继承的protected似乎无法在列表中初始化
 
     id_motor>0&&id_motor<9 ? id = id_motor : is_id_false = 1;
-    type==DJI_GM6020?(id_motor==8?is_id_false=1:id=id_motor):id=id_motor;
+    type==DJI_GM6020?(id_motor==8?is_id_false=1:id=id_motor):id=id_motor; //判断6020id是否为8
 
     callback_ == nullptr ? can_rx.can_set_callback(dji_motor_data_update_callback) : can_rx.can_set_callback(callback_);
 
@@ -218,6 +218,8 @@ void DJI_motor::motor_control(uint32_t cmd_) {
         case DJI_MOTOR_RESET_OFFSET:
             motor_reset();
             break;
+        case DJI_MOTOR_DISABLE_OFFSET:
+            motor_data.offset_ecd = 0;
     }
 }
 

@@ -43,7 +43,8 @@ protected:
     uint32_t Prescaler;     //分频系数
     uint32_t Period;        //计数值
     uint32_t pwmVal;        //向上计数触发值
-    float motor_speed;            //范围0-1
+    float duty_cycle;       //占空比，只能大于0.5
+    float motor_speed;      //范围0-1
 };
 
 
