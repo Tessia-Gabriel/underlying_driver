@@ -147,6 +147,7 @@ void DM_motor::motor_set_current_forward(float current) {
     ctrl.kd = 0;
     ctrl.v_des = 0;
     ctrl.p_des = 0;
+    current = current > 1.0f ? 1.0f : (current < -1.0f ? -1.0f : current);
     ctrl.torq = current * DM_J4310_2EC_T_MAX;
     set_dm_ctrl_to_can_tx_buff();
 }
