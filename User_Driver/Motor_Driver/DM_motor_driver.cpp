@@ -159,7 +159,7 @@ void DM_motor::motor_set_speed_forward(float speed) {
 
 void DM_motor::motor_set_rounds_forward(float rounds) {
     posPid.pid_calculate(rounds, motor_get_rounds_forward());
-    motor_set_current_forward(posPid.out);
+    motor_set_speed_forward(posPid.out);
 }
 
 

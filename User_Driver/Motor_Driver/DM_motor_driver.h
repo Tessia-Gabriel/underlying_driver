@@ -22,7 +22,7 @@
 
 const float RAD2ROUND = 1.0f/(2*PI);
 const float DM_J4310_2EC_V_MAX = 30.0f;
-const float DM_J4310_2EC_P_MAX = 3.141593f;
+const float DM_J4310_2EC_P_MAX = 12.5f;
 const float DM_J4310_2EC_T_MAX = 10.0f;
 
 const float DM_J4310_2EC_KP_MIN = 0.0f;
