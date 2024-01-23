@@ -29,7 +29,7 @@ const float ENCODER_ANGLE_RATIO = 22.755555555555556f;     //(8192.0f / 360.0f)
 const float ENCODER_TO_ANGLE_RATIO = 0.0439453125f;        // 360/8192.0
 const float ENCODER_MAX = 8192.0f;
 const float ENCODER_TO_ROUND = 1.0f/8192.0f;
-const float MOTOR_6020_MAX_CURRENT = 16384;                //16384 for M3508
+const float MOTOR_6020_MAX_CURRENT = 25000;                //25000 for 6020
 const float MOTOR_3508_MAX_CURRENT = 16384;                //16384 for M3508
 const float MOTOR_2006_MAX_CURRENT = 10000;
 

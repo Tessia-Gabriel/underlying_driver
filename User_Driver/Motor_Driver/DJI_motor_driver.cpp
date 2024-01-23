@@ -36,7 +36,7 @@ DJI_motor::DJI_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_,
                       cmd(DJI_MOTOR_RESET_OFFSET),init_offset_f(false),is_id_false(false),
 
                       can_rx(hcan_,(type_==DJI_M3508||type_==DJI_M2006)?0x200+id_motor:0x204+id_motor,callback_),
-                      can_tx(hcan_,(type_==DJI_M3508||type_==DJI_M2006)?(id_motor<=4?0x200:0x1ff):(id_motor<=4?0x1fe:0x2fe)),
+                      can_tx(hcan_,(type_==DJI_M3508||type_==DJI_M2006)?(id_motor<=4?0x200:0x1ff):(id_motor<=4?0x1ff:0x2ff)),
                       velPid(0.5f, 0.1f, 10, 0.002f, 0.1f),
                       posPid(0.2f,0.1f,0.3f,0.f,0.f) {
 
