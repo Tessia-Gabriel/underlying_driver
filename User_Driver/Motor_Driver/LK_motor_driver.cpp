@@ -4,8 +4,12 @@
 
 #include "LK_motor_driver.h"
 
-uint8_t read_motor_status[8] = {
+uint8_t read_single_motor_status[8] = {
         0x9c,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+};
+
+uint8_t read_multi_motor_status[8] = {
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 };
 
 uint8_t read_pi_cmd[8] = {
@@ -22,11 +26,16 @@ uint8_t LK_motor_can2_total_data[33][8] = {0};  //任务里用这里面的数据
 uint8_t LK_motor_can1_enable_list[33] = {0};         //若电机初始化成功则使能对应位置
 uint8_t LK_motor_can2_enable_list[33] = {0};         //若电机初始化成功则使能对应位置
 
+uint8_t LK_motor_can1_multi_buf[8] = {0}; //多电机can1发送，只支持四个
+uint8_t LK_motor_can2_multi_buf[8] = {0}; //多电机can2发送，只支持四个
+uint8_t LK_motor_can1_multi_ctrl_enable = 0;
+uint8_t LK_motor_can2_multi_ctrl_enable = 0;
+
 void LK_motor_update_data_callback(can_device_receive *can_receive, uint8_t *data);
 
-LK_motor::LK_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_, uint32_t id_motor, LK_motor_type motor_type, uint8_t is_reverse, uint8_t is_use_motor_pid_)
-         : can_rx(hcan_,0x140+id_motor,callback_), can_tx(hcan_,0x140+id_motor), default_data_rx{},
-           is_pid_send_success(false), is_init_success(false), mode(torque_ctrl), type(motor_type),
+LK_motor::LK_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_, uint8_t is_use_multi_ctrl_, uint32_t id_motor, LK_motor_type motor_type, uint8_t is_reverse, uint8_t is_use_motor_pid_)
+         : can_rx(hcan_,0x140+id_motor,callback_), can_tx(hcan_,is_use_multi_ctrl_?0x280:0x140+id_motor), default_data_rx{},
+           is_pid_send_success(false), is_init_success(false), mode(torque_ctrl), type(motor_type), is_use_multi_ctrl(is_use_multi_ctrl_),
            motor_id(id_motor), motor_data{}, power_send(0), is_use_motor_pid(is_use_motor_pid_),
            posPid(0.2f,0.1f,0.3f,0.f,0.f),
            velPid(0.5f, 0.1f, 10, 0.002f, 0.1f),
@@ -35,7 +44,8 @@ LK_motor::LK_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_, uint32_
     /** -------------------------------初始化---------------------------------- **/
     callback_ == nullptr ? can_rx.can_set_callback(LK_motor_update_data_callback) : can_rx.can_set_callback(callback_);
 
-    default_data_tx = (hcan_ == &hcan1) ? LK_motor_can1_total_data[motor_id] : LK_motor_can2_total_data[motor_id];
+    default_data_tx = (hcan_ == &hcan1) ? (is_use_multi_ctrl_ ? LK_motor_can1_multi_buf : LK_motor_can1_total_data[motor_id])
+                                        : (is_use_multi_ctrl_ ? LK_motor_can2_multi_buf : LK_motor_can2_total_data[motor_id]);
 
     can_tx.set_buf_address(default_data_tx);
 
@@ -69,8 +79,10 @@ LK_motor::LK_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_, uint32_
 
     is_init_success = 1;
 
-    LK_motor_can1_enable_list[motor_id] = (hcan_ == &hcan1) ? 1 : 0;
-    LK_motor_can2_enable_list[motor_id] = (hcan_ == &hcan2) ? 1 : 0;
+    LK_motor_can1_enable_list[motor_id] = (hcan_ == &hcan1) ? (is_use_multi_ctrl == 1 ? 0 : 1) : 0;
+    LK_motor_can2_enable_list[motor_id] = (hcan_ == &hcan2) ? (is_use_multi_ctrl == 1 ? 0 : 1) : 0;
+    LK_motor_can1_multi_ctrl_enable = (hcan_ == &hcan1) ? (is_use_multi_ctrl == 1 ? 1 : 0) : 0;
+    LK_motor_can2_multi_ctrl_enable = (hcan_ == &hcan2) ? (is_use_multi_ctrl == 1 ? 1 : 0) : 0;
 }
 
 bool LK_motor::motor_pid_send() {
@@ -166,16 +178,21 @@ void LK_motor::motor_set_speed_forward(float speed){
 void LK_motor::motor_set_current_forward(float current){
     current = current > 1.0f ? 1.0f : (current < -1.0f ? -1.0f : current);
     power_send = (int16_t)(current * motor_param.max_power);
-    default_data_tx[0] = 0xA0;
-    default_data_tx[1] = 0x00;
-    default_data_tx[2] = 0x00;
-    default_data_tx[3] = 0x00;
     taskENTER_CRITICAL();
-    default_data_tx[4] = power_send;
-    default_data_tx[5] = power_send >> 8;
+    if(is_use_multi_ctrl){
+        default_data_tx[motor_id * 2] = power_send;
+        default_data_tx[motor_id * 2 + 1] = power_send >> 8;
+    }else{
+        default_data_tx[0] = 0xA0;
+        default_data_tx[1] = 0x00;
+        default_data_tx[2] = 0x00;
+        default_data_tx[3] = 0x00;
+        default_data_tx[4] = power_send;
+        default_data_tx[5] = power_send >> 8;
+        default_data_tx[6] = 0x00;
+        default_data_tx[7] = 0x00;
+    }
     taskEXIT_CRITICAL();
-    default_data_tx[6] = 0x00;
-    default_data_tx[7] = 0x00;
 }
 
 float LK_motor::motor_get_rounds_forward() {
@@ -187,6 +204,7 @@ float LK_motor::motor_get_speed_forward() {
 }
 
 
+///多电机仅能使用read_status
 void LK_motor::motor_control(uint32_t cmd) {
     switch(cmd){
         case read_pi:
@@ -210,9 +228,19 @@ void LK_motor::motor_control(uint32_t cmd) {
             can_tx.set_buf_address(default_data_tx);
             break;
         case read_status:
-            can_tx.set_buf_address(read_motor_status);
-            can_tx.can_send_msg();
-            can_tx.set_buf_address(default_data_tx);
+            can_device_transmit can_tx_tmp(can_tx.member.hcan);
+            can_tx_tmp.set_id(is_use_motor_pid ? 0x288 : can_tx.member.id);
+
+            if(is_use_motor_pid){
+                can_tx_tmp.set_buf_address(read_multi_motor_status);
+                read_multi_motor_status[motor_id*2] = 0x9c;
+                can_tx_tmp.can_send_msg();
+                read_multi_motor_status[motor_id*2] = 0;
+            }else{
+                can_tx_tmp.set_buf_address(read_single_motor_status);
+                can_tx_tmp.can_send_msg();
+            }
+
             break;
     }
 }

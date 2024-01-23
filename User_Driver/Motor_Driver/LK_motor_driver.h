@@ -27,7 +27,7 @@ const float LK_MS_5015_MAX_POWER = 1000.0f;                                     
 const uint32_t LK_MS_5015_MAX_ECD = 16384;                                              //编码器最大值(达不到，要减1)
 const float LK_MS_5015_ECD2ROUND = 1.0f / 16384.0f;                                     //编码器最大值(达不到，要减1)
 
-
+///多电机控制目前只支持转矩开环控制，一是没有写PID命令了，二是我懒得写了
 enum LK_motor_mode{
     pos_ctrl_2 = 0,  //  位置闭环控制命令2（似乎要调三个环的参数，转矩环也有），电机内置pid
     speed_ctrl = 1,  //  速度闭环控制，电机内置pid
@@ -81,7 +81,7 @@ struct LK_motor_param{
 class LK_motor : public motor_dev{
 public:
     /***--------------------------初始化时用------------------------------***/
-    LK_motor(CAN_HandleTypeDef *hcan_=&hcan1, can_rx_callback *callback_ = nullptr,
+    LK_motor(CAN_HandleTypeDef *hcan_=&hcan1, can_rx_callback *callback_ = nullptr, uint8_t is_use_multi_ctrl_ = 0,
              uint32_t id_motor = 1, LK_motor_type motor_type = ms_5010, uint8_t is_reverse = 0, uint8_t is_use_motor_pid_ = 0);
 
     void motor_control(uint32_t cmd) override;
@@ -106,7 +106,7 @@ protected:
     can_device_receive can_rx;
     can_device_transmit can_tx;
     LK_motor_mode mode;
-    LK_motor_type type;  //需要加电机在这里加，我还没写
+    LK_motor_type type;
     pid posPid;
     pid velPid;
     pid torPid; //只有电机内置pid的时候会用，且只会用到pi参数
@@ -118,6 +118,7 @@ protected:
     uint8_t motor_id;
     pid_mode pidMode;
     LK_motor_param motor_param;
+    uint8_t is_use_multi_ctrl;
 
 public:
     uint8_t default_data_rx[8];

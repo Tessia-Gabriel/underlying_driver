@@ -64,6 +64,7 @@ DM_motor::DM_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_,
     while(init_offset == 0){
         motor_set_current_forward(0);
         can_tx.can_send_msg();
+        osDelay(1);
     }
 
     DM_motor_can1_enable_list[motor_num] = (hcan_ == &hcan1) ? 1 : 0;
