@@ -63,7 +63,7 @@ float pid::pid_calculate(float set_, float get_) {
     return(out);
 }
 
-void pid::pid_reset(float kp, float ki, float kd, float max_out, float integral_limit) {
+void pid::pid_reset(float max_out, float integral_limit, float kp, float ki, float kd) {
     if (kp >= 0)param.p = kp;
     if(fabsf(ki) <= 1e-6){
         param.i = 0;

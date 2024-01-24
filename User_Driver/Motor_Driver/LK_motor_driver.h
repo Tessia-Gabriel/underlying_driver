@@ -21,11 +21,11 @@ const uint32_t LK_MS_5010_MAX_ECD = 65536;                                      
 const float LK_MS_5010_ECD2ROUND = 1.0f / 65536.0f;                                     //编码器最大值(达不到，要减1)
 
 
-const float LK_MS_5015_MAX_SPEED_RPM = 360.0f;                                          //单位rpm，最大转速，转每分钟
-const float LK_MS_5015_MAX_SPEED_DPS = LK_MS_5015_MAX_SPEED_RPM * 360.0f / 60.0f;       //单位dps，度每秒
-const float LK_MS_5015_MAX_POWER = 1000.0f;                                             //返回值为1000~-1000，但实际最大功率为9.8W
-const uint32_t LK_MS_5015_MAX_ECD = 16384;                                              //编码器最大值(达不到，要减1)
-const float LK_MS_5015_ECD2ROUND = 1.0f / 16384.0f;                                     //编码器最大值(达不到，要减1)
+const float LK_MS_6015_MAX_SPEED_RPM = 360.0f;                                          //单位rpm，最大转速，转每分钟
+const float LK_MS_6015_MAX_SPEED_DPS = LK_MS_6015_MAX_SPEED_RPM * 360.0f / 60.0f;       //单位dps，度每秒
+const float LK_MS_6015_MAX_POWER = 1000.0f;                                             //返回值为1000~-1000，但实际最大功率为9.8W
+const uint32_t LK_MS_6015_MAX_ECD = 32768;                                              //编码器最大值(达不到，要减1)
+const float LK_MS_6015_ECD2ROUND = 1.0f / 32768.0f;                                     //编码器最大值(达不到，要减1)
 
 ///多电机控制目前只支持转矩开环控制，一是没有写PID命令了，二是我懒得写了
 enum LK_motor_mode{
@@ -107,9 +107,6 @@ protected:
     can_device_transmit can_tx;
     LK_motor_mode mode;
     LK_motor_type type;
-    pid posPid;
-    pid velPid;
-    pid torPid; //只有电机内置pid的时候会用，且只会用到pi参数
     bool is_pid_send_success;
     bool is_init_success; //需手动置1，置1后CAN发送自动开启
     LK_motor_data motor_data;
@@ -123,6 +120,9 @@ protected:
 public:
     uint8_t default_data_rx[8];
     uint8_t *default_data_tx;
+    pid posPid;
+    pid velPid;
+    pid torPid; //只有电机内置pid的时候会用，且只会用到pi参数
 };
 
 

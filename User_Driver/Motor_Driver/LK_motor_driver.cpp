@@ -60,10 +60,10 @@ LK_motor::LK_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_, uint8_t
             motor_param.ecd2round = LK_MS_5010_ECD2ROUND;
             break;
         case ms_6015:
-            motor_param.max_speed_dps = LK_MS_5015_MAX_SPEED_DPS;
-            motor_param.max_power = LK_MS_5015_MAX_POWER;
-            motor_param.max_ecd = LK_MS_5015_MAX_ECD;
-            motor_param.ecd2round = LK_MS_5015_ECD2ROUND;
+            motor_param.max_speed_dps = LK_MS_6015_MAX_SPEED_DPS;
+            motor_param.max_power = LK_MS_6015_MAX_POWER;
+            motor_param.max_ecd = LK_MS_6015_MAX_ECD;
+            motor_param.ecd2round = LK_MS_6015_ECD2ROUND;
             break;
     }
 
@@ -144,7 +144,7 @@ void LK_motor::motor_set_rounds_forward(float rounds) {
             mode = pos_ctrl_2;
             break;
         case torque_ctrl:
-            float set = velPid.pid_calculate(rounds, motor_get_rounds_forward());
+            float set = posPid.pid_calculate(rounds, motor_get_rounds_forward());
             motor_set_speed_forward(set);
             break;
     }
