@@ -36,7 +36,7 @@ public:
         float kd = 0.5);
 
     float pid_calculate(float set_, float get_);
-    void pid_reset(float kp, float ki, float kd, float max_out, float integral_limit);
+    void pid_reset(float max_out, float integral_limit, float kp, float ki, float kd);
     void pid_clear();
 
 protected:
