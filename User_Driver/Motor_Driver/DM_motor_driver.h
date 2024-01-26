@@ -46,7 +46,7 @@ enum dm_cmd {
     disable_motor = 1,
     save_zero_offset = 2,
     clear_pid = 3,
-    disable_offset = 4, //将偏置消除，如果绝对值编码器好用的话
+    DM_disable_offset = 4, //将偏置消除，如果绝对值编码器好用的话
 };
 
 typedef struct {

@@ -259,7 +259,7 @@ void DM_motor::motor_control(uint32_t cmd) {
             posPid.pid_clear();
             break;
 
-        case disable_offset:
+        case DM_disable_offset:
             data.offset_ecd = 0;
             data.offset_round = 0;
             break;

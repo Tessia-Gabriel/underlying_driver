@@ -242,7 +242,7 @@ void LK_motor::motor_control(uint32_t cmd) {
             }
 
             break;
-        case disable_offset:
+        case LK_disable_offset:
             motor_data.offset_ecd = 0;
 
     }
