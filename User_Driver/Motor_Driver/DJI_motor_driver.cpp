@@ -176,7 +176,7 @@ void DJI_motor::motor_set_current_forward(float current) {
 }
 
 
-
+//speed=0.05
 void DJI_motor::motor_set_speed_forward(float speed) {
     switch(type){
         case DJI_M3508:
@@ -189,13 +189,13 @@ void DJI_motor::motor_set_speed_forward(float speed) {
             velPid.pid_calculate(speed, (float)(motor_get_speed_forward()) / MOTOR_6020_MAX_SPEED);
             break;
     }
-    motor_set_current(velPid.out);
+    motor_set_current_forward(velPid.out);
 }
 
 
 void DJI_motor::motor_set_rounds_forward(float rounds) {
     posPid.pid_calculate(rounds, (float)(motor_get_rounds_forward()));
-    motor_set_speed(posPid.out);
+    motor_set_speed_forward(posPid.out);
 }
 
 

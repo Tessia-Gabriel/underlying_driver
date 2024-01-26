@@ -145,7 +145,7 @@ void LK_motor::motor_set_rounds_forward(float rounds) {
             break;
         case torque_ctrl:
             float set = posPid.pid_calculate(rounds, motor_get_rounds_forward());
-            motor_set_speed(set);
+            motor_set_speed_forward(set);
             break;
     }
 }
@@ -169,7 +169,7 @@ void LK_motor::motor_set_speed_forward(float speed){
             break;
         case torque_ctrl:
             float set = velPid.pid_calculate(speed, (float)(motor_get_speed_forward()) / motor_param.max_speed_dps);
-            motor_set_current(set);
+            motor_set_current_forward(set);
             break;
     }
 }
