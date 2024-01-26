@@ -42,7 +42,8 @@ enum pid_mode{ //单纯为了好看，选择pid在单片机算还是电机算
 enum LK_motor_cmd{
     read_pi = 0,
     write_pi = 1,
-    read_status = 2
+    read_status = 2,
+    disable_offset = 3, //将偏置消除
 };
 
 enum LK_motor_type{

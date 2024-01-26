@@ -206,6 +206,7 @@ float LK_motor::motor_get_speed_forward() {
 
 ///多电机仅能使用read_status
 void LK_motor::motor_control(uint32_t cmd) {
+    can_device_transmit can_tx_tmp(can_tx.member.hcan);
     switch(cmd){
         case read_pi:
             can_tx.set_buf_address(read_pi_cmd);
@@ -228,7 +229,6 @@ void LK_motor::motor_control(uint32_t cmd) {
             can_tx.set_buf_address(default_data_tx);
             break;
         case read_status:
-            can_device_transmit can_tx_tmp(can_tx.member.hcan);
             can_tx_tmp.set_id(is_use_multi_ctrl ? 0x288 : can_tx.member.id);
 
             if(is_use_multi_ctrl){
@@ -242,6 +242,9 @@ void LK_motor::motor_control(uint32_t cmd) {
             }
 
             break;
+        case disable_offset:
+            motor_data.offset_ecd = 0;
+
     }
 }
 
