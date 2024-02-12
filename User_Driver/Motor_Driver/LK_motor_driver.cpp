@@ -37,8 +37,8 @@ LK_motor::LK_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_, uint8_t
          : can_rx(hcan_,0x140+id_motor,callback_), can_tx(hcan_,is_use_multi_ctrl_?0x280:0x140+id_motor), default_data_rx{},
            is_pid_send_success(false), is_init_success(false), mode(torque_ctrl), type(motor_type), is_use_multi_ctrl(is_use_multi_ctrl_),
            motor_id(id_motor), motor_data{}, power_send(0), is_use_motor_pid(is_use_motor_pid_),
-           posPid(0.2f,0.1f,0.3f,0.f,0.f),
-           velPid(0.5f, 0.1f, 10, 0.002f, 0.1f),
+           posPid(0.2f,0.1f,3.f,0.f,0.f),
+           velPid(0.5f, 0.1f, 2.f, 0.002f, 0.1f),
            torPid(0,0,0,0,0)                    //需重新自己赋值，因为默认使用单片机内置pid，并不需要力矩环
          {
     /** -------------------------------初始化---------------------------------- **/
