@@ -220,6 +220,10 @@ void DJI_motor::motor_control(uint32_t cmd_) {
             break;
         case DJI_MOTOR_DISABLE_OFFSET:
             motor_data.offset_ecd = 0;
+            break;
+        case DJI_MOTOR_ADD_ONE_LAP_OFFSET:
+            motor_data.offset_ecd = motor_data.offset_ecd + ENCODER_MAX;
+            break;
     }
 }
 

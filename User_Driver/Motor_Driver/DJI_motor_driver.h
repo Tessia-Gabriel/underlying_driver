@@ -42,6 +42,7 @@ enum DJI_CMD {
     DJI_MOTOR_CLEAR_PID = 200,
     DJI_MOTOR_RESET_OFFSET,
     DJI_MOTOR_DISABLE_OFFSET,   //适用于6020，因为其为绝对值编码器
+    DJI_MOTOR_ADD_ONE_LAP_OFFSET,    //适用于初始化过零点问题，加一圈偏置
 };
 
 struct dji_motor_data {
@@ -56,7 +57,7 @@ struct dji_motor_data {
     float total_round;      //总圈数
     int32_t ecd_raw_rate;   //差值
     uint32_t msg_cnt;       //计数用于
-    uint16_t offset_ecd;    //校准偏置
+    int32_t offset_ecd;    //校准偏置
 };
 
 
