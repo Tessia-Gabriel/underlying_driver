@@ -43,6 +43,7 @@ enum DJI_CMD {
     DJI_MOTOR_RESET_OFFSET,
     DJI_MOTOR_DISABLE_OFFSET,   //适用于6020，因为其为绝对值编码器
     DJI_MOTOR_ADD_ONE_LAP_OFFSET,    //适用于初始化过零点问题，加一圈偏置
+    DJI_MOTOR_SUB_ONE_LAP_OFFSET,    //适用于初始化过零点问题，减一圈偏置
 };
 
 struct dji_motor_data {
@@ -50,6 +51,8 @@ struct dji_motor_data {
     uint16_t ecd;           //转子机械角度 编码器值
     int16_t speed_rpm;      //转速
     int16_t given_current;  //实际电流
+
+    float *external_speed;  //外置速度  该速度需用户自己更新
 
     int32_t round_cnt;      //圈数计算
     int32_t total_ecd;      //总机械角
@@ -71,6 +74,8 @@ public:
     /***--------------------------指令------------------------------***/
     bool motor_reset() override;                             //复位
     void motor_control(uint32_t cmd) override;
+
+    void motor_change_speed_source(float *speed);
 
 protected:
     /****------------------------------电机运行时用---------------------------------***/
@@ -97,6 +102,7 @@ protected:
     can_device_transmit can_tx;
     uint8_t bias_ordinal;
     DJI_CMD cmd;
+    uint8_t is_use_external_speed;   //是否使用外置速度
 
 public:
     uint8_t can_rx_data[8];

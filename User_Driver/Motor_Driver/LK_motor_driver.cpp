@@ -244,8 +244,25 @@ void LK_motor::motor_control(uint32_t cmd) {
             break;
         case LK_disable_offset:
             motor_data.offset_ecd = 0;
+            motor_control(read_status); //更新数据
+            break;
+
+        case LK_add_one_lap_offset:
+            motor_data.offset_ecd = motor_data.offset_ecd + motor_param.max_ecd;
+            motor_control(read_status); //更新数据
+            break;
+
+        case LK_sub_one_lap_offset:
+            motor_data.offset_ecd = motor_data.offset_ecd - motor_param.max_ecd;
+            motor_control(read_status); //更新数据
+            break;
 
     }
+}
+
+
+void LK_motor::motor_set_offset(uint32_t offset) {
+    motor_data.offset_ecd = offset;
 }
 
 
@@ -295,6 +312,7 @@ bool LK_motor::motor_reset() {
     motor_data.total_ecd = 0;
     motor_data.total_round = 0;
     motor_data.round_cnt = 0;
+    motor_control(read_status); //更新数据
     return(true);
 }
 

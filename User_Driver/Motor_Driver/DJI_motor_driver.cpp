@@ -32,7 +32,7 @@ void dji_motor_data_update_callback(can_device_receive *can_receive, uint8_t *da
 DJI_motor::DJI_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_,
                      uint32_t id_motor, DJI_MOTOR_TYPE type_, uint8_t is_reverse)
                      :can_rx_data{},motor_data{},
-                      type(type_),current_to_send(0),bias_ordinal(0),
+                      type(type_),current_to_send(0),bias_ordinal(0),is_use_external_speed(0),
                       cmd(DJI_MOTOR_RESET_OFFSET),init_offset_f(false),is_id_false(false),
 
                       can_rx(hcan_,(type_==DJI_M3508||type_==DJI_M2006)?0x200+id_motor:0x204+id_motor,callback_),
@@ -140,7 +140,16 @@ void DJI_motor::dji_motor_can_tx_write() {
  * @return 电机实际速度 单位rpm
  */
 float DJI_motor::motor_get_speed_forward() {
-    return (float)motor_data.speed_rpm;
+    if(is_use_external_speed == 1){
+        return *motor_data.external_speed;
+    } else{
+        return (float)motor_data.speed_rpm;
+    }
+}
+
+void DJI_motor::motor_change_speed_source(float *speed) {
+    is_use_external_speed = 1;
+    motor_data.external_speed = speed;
 }
 
 
@@ -223,6 +232,9 @@ void DJI_motor::motor_control(uint32_t cmd_) {
             break;
         case DJI_MOTOR_ADD_ONE_LAP_OFFSET:
             motor_data.offset_ecd = motor_data.offset_ecd + ENCODER_MAX;
+            break;
+        case DJI_MOTOR_SUB_ONE_LAP_OFFSET:
+            motor_data.offset_ecd = motor_data.offset_ecd - ENCODER_MAX;
             break;
     }
 }

@@ -44,6 +44,8 @@ enum LK_motor_cmd{
     write_pi = 1,
     read_status = 2,
     LK_disable_offset = 3, //将偏置消除
+    LK_add_one_lap_offset = 4,  //适用于初始化过零点问题，加一圈偏置
+    LK_sub_one_lap_offset = 5,  //适用于初始化过零点问题，减一圈偏置
 };
 
 enum LK_motor_type{
@@ -64,7 +66,7 @@ struct LK_motor_data {
     float total_round;      //总圈数
     int32_t ecd_raw_rate;   //差值
     uint32_t msg_cnt;       //计数用于
-    uint16_t offset_ecd;    //校准偏置
+    int64_t offset_ecd;    //校准偏置
 };
 
 struct LK_motor_param{
@@ -88,6 +90,7 @@ public:
     void motor_control(uint32_t cmd) override;
     bool motor_reset() override;                             //复位
     bool motor_pid_send(); ///这个函数只适合pos_ctl_2用
+    void motor_set_offset(uint32_t offset); //未归一化
 
 
 protected:

@@ -26,6 +26,8 @@ uint8_t DM_motor_can2_enable_list[33] = {0};         //若电机初始化成功�
 uint8_t array_enable_motor[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xfc};
 uint8_t array_disable_motor[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xfd};
 uint8_t array_save_zero_offset[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xfe};
+uint8_t array_error_clear[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xfb};
+
 
 void dm_motor_rx_data_update_callback(can_device_receive *can_receive, uint8_t *data);
 
@@ -164,7 +166,33 @@ void DM_motor::motor_set_rounds_forward(float rounds) {
     motor_set_speed_forward(posPid.out);
 }
 
+float DM_motor::motor_get_current_rounds(){
+    if(reverse){
+        return(-data.current_round);
+    }else{
+        return(data.current_round);
+    }
 
+}
+
+void DM_motor::motor_error_protection(){
+    uint8_t dis_cnt = 0;
+    uint8_t en_cnt = 0;
+    if(raw.err >= 8){
+        while(dis_cnt < 10){
+            this->motor_control(clear_error);
+            dis_cnt++;
+            osDelay(1);
+        }
+
+        while(en_cnt < 10){
+            this->motor_control(enable_motor);
+            en_cnt++;
+            osDelay(1);
+        }
+
+    }
+}
 
 
 void dm_motor_rx_data_update_callback(can_device_receive *can_receive, uint8_t *data){
@@ -262,6 +290,10 @@ void DM_motor::motor_control(uint32_t cmd) {
         case DM_disable_offset:
             data.offset_ecd = 0;
             data.offset_round = 0;
+            break;
+
+        case clear_error:
+            memcpy(can_tx.member.buf_data, array_error_clear, 8);
             break;
     }
 }

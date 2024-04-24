@@ -47,6 +47,7 @@ enum dm_cmd {
     save_zero_offset = 2,
     clear_pid = 3,
     DM_disable_offset = 4, //将偏置消除，如果绝对值编码器好用的话
+    clear_error = 5,
 };
 
 typedef struct {
@@ -110,6 +111,9 @@ public:
     /***--------------------------指令------------------------------***/
     bool motor_reset() override;                             //复位
     void motor_control(uint32_t cmd) override;
+    float motor_get_current_rounds();   //获取当前绝对值编码器值，即不加圈数
+    void motor_error_protection();
+
 
 protected:
     /****------------------------------电机运行时用---------------------------------***/
