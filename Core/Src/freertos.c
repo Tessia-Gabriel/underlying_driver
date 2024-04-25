@@ -108,6 +108,13 @@ const osThreadAttr_t DM_Motor_Service_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
+/* Definitions for CAN_Test_Task */
+osThreadId_t CAN_Test_TaskHandle;
+const osThreadAttr_t CAN_Test_Task_attributes = {
+  .name = "CAN_Test_Task",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for can1_send_fifo */
 osMessageQueueId_t can1_send_fifoHandle;
 const osMessageQueueAttr_t can1_send_fifo_attributes = {
@@ -142,6 +149,7 @@ void motor_test_task(void *argument);
 void DJI_motor_service(void *argument);
 void LK_motor_service(void *argument);
 void DM_motor_service(void *argument);
+void can_test_task(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -209,6 +217,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of DM_Motor_Service */
   DM_Motor_ServiceHandle = osThreadNew(DM_motor_service, NULL, &DM_Motor_Service_attributes);
+
+  /* creation of CAN_Test_Task */
+  CAN_Test_TaskHandle = osThreadNew(can_test_task, NULL, &CAN_Test_Task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -362,6 +373,24 @@ __weak void DM_motor_service(void *argument)
     osDelay(1);
   }
   /* USER CODE END DM_motor_service */
+}
+
+/* USER CODE BEGIN Header_can_test_task */
+/**
+* @brief Function implementing the CAN_Test_Task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_can_test_task */
+__weak void can_test_task(void *argument)
+{
+  /* USER CODE BEGIN can_test_task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END can_test_task */
 }
 
 /* Private application code --------------------------------------------------*/
