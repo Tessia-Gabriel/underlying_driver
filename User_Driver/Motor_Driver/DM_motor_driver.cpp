@@ -56,17 +56,17 @@ DM_motor::DM_motor(CAN_HandleTypeDef *hcan_, can_rx_callback *callback_,
 
     /** -------------------------------检测电机---------------------------------- **/
 
+    while(init_offset == 0){
+        motor_set_current_forward(0);
+        can_tx.can_send_msg();
+        osDelay(1);
+    }
+
     memcpy(can_tx.member.buf_data, array_enable_motor, 8);
     uint8_t cnt = 0;
     while(cnt<10){
         can_tx.can_send_msg();
         cnt++;
-    }
-
-    while(init_offset == 0){
-        motor_set_current_forward(0);
-        can_tx.can_send_msg();
-        osDelay(1);
     }
 
     DM_motor_can1_enable_list[motor_num] = (hcan_ == &hcan1) ? 1 : 0;
@@ -301,21 +301,21 @@ void DM_motor::motor_control(uint32_t cmd) {
 
 
 void DM_motor_service(void *argument){
-    can_device_transmit LK_motor_can1_service(&hcan1);
-    can_device_transmit LK_motor_can2_service(&hcan2);
+    can_device_transmit DM_motor_can1_service(&hcan1);
+    can_device_transmit DM_motor_can2_service(&hcan2);
     for(;;){
         for(int i=1;i<=32;i++){
 
             if(DM_motor_can1_enable_list[i] == 1) {
-                LK_motor_can1_service.set_id(DM_motor_can1_tx_id[i]);
-                LK_motor_can1_service.set_buf_address(DM_motor_can1_total_data[i]);
-                LK_motor_can1_service.can_send_msg();
+                DM_motor_can1_service.set_id(DM_motor_can1_tx_id[i]);
+                DM_motor_can1_service.set_buf_address(DM_motor_can1_total_data[i]);
+                DM_motor_can1_service.can_send_msg();
             }
 
             if(DM_motor_can2_enable_list[i] == 1) {
-                LK_motor_can2_service.set_id(DM_motor_can1_tx_id[i]);
-                LK_motor_can2_service.set_buf_address(DM_motor_can2_total_data[i]);
-                LK_motor_can2_service.can_send_msg();
+                DM_motor_can2_service.set_id(DM_motor_can2_tx_id[i]);
+                DM_motor_can2_service.set_buf_address(DM_motor_can2_total_data[i]);
+                DM_motor_can2_service.can_send_msg();
             }
 
 
