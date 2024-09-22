@@ -13,6 +13,7 @@ extern "C" {
 #include "DJI_motor_driver.h"
 #include "DM_motor_driver.h"
 #include "pwm_motor_driver.h"
+#include "HT_motor_driver.h"
 
 void motor_test_task(void *argument);
 

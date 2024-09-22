@@ -1,17 +1,17 @@
 /**
   ******************************************************************************
-  * @file           : DM_motor_driver.h
+  * @file           : HT_motor_driver.h
   * @author         : Tessia
   * @brief          : None
   * @attention      : None
-  * @date           : 2024/1/16
+  * @date           : 2024/9/20
   ******************************************************************************
   */
 
 
 
-#ifndef PEPPER_PICKER_GIMBAL_DM_MOTOR_DRIVER_H
-#define PEPPER_PICKER_GIMBAL_DM_MOTOR_DRIVER_H
+#ifndef UNDERLYING_DRIVER_HT_MOTOR_DRIVER_H
+#define UNDERLYING_DRIVER_HT_MOTOR_DRIVER_H
 
 #include "stm32f4xx_hal.h"
 #include "cmsis_os.h"
@@ -19,46 +19,31 @@
 #include "motor_driver.h"
 #include "CAN_bsp.h"
 #include "pid_driver.h"
+#include "DM_motor_driver.h"
 
-const float RAD2ROUND = 1.0f/(2*PI);
-const float DM_J4310_2EC_V_MAX = 30.0f;
-const float DM_J4310_2EC_P_MAX = 12.5f;
-const float DM_J4310_2EC_T_MAX = 10.0f;
 
-const float DM_J4310_2EC_KP_MIN = 0.0f;
-const float DM_J4310_2EC_KP_MAX = 500.0f;
-const float DM_J4310_2EC_KD_MIN = 0.0f;
-const float DM_J4310_2EC_KD_MAX = 5.0f;
+const float HT_8115_J9_P_MIN = -95.5f;    // Radians
+const float HT_8115_J9_P_MAX = 95.5f;
+const float HT_8115_J9_V_MIN = -45.0f;    // Rad/s
+const float HT_8115_J9_V_MAX = 45.0f;
+const float HT_8115_J9_KP_MIN = 0;     // N-m/rad
+const float HT_8115_J9_KP_MAX = 500;
+const float HT_8115_J9_KD_MIN = 0;     // N-m/rad/s
+const float HT_8115_J9_KD_MAX = 5;
+const float HT_8115_J9_T_MIN = -18;
+const float HT_8115_J9_T_MAX = 18;
 
-//MIT做位控的话速度给0
-enum dm_motor_mode{
-    DM_MIT = 0,  //MIT模式
-    DM_PV = 1,   //位置模式
-    DM_VO = 2,   //速度模式
-};
-
-enum motor_type{
-    DM_J4310_2EC = 0, //默认为
-};
-
-enum dm_cmd {
-    enable_motor = 0,
-    disable_motor = 1,
-    save_zero_offset = 2,
-    clear_pid = 3,
-    disable_offset = 4, //将偏置消除，如果绝对值编码器好用的话
-    clear_error = 5,
+enum ht_motor_type{
+    HT_8115_J9 = 0, //默认为
 };
 
 typedef struct {
     uint8_t id;
-    uint8_t err;
     uint16_t pos;       //转子机械角度 编码器值
-    uint16_t vel;        //转速以rad/s为单位
-    uint16_t torque;    //转矩
-    uint8_t t_mos;      //驱动上平均温度℃
-    uint8_t t_rotor;    //电机线圈温度℃
-} dm_motor_raw_data;
+    uint16_t vel;       //转速以rad/s为单位
+    uint16_t current;   //电流
+} ht_motor_raw_data;
+
 
 #pragma pack(1)
 typedef struct{
@@ -67,7 +52,7 @@ typedef struct{
     uint16_t kp : 12;
     uint16_t kd : 12;
     uint16_t t_ff : 12;
-} dm_motor_can_tx_buff;
+} ht_motor_can_tx_buff;
 #pragma pack()
 
 typedef struct{
@@ -76,7 +61,7 @@ typedef struct{
     float kp;
     float kd;
     float torq;
-} dm_motor_tx;
+} ht_motor_tx;
 
 typedef struct{
     uint16_t last_ecd;
@@ -98,21 +83,20 @@ typedef struct{
     uint32_t msg_cnt;       //计数用于
     uint16_t offset_ecd;    //校准偏置
     float offset_round;     //浮点偏置
-}dm_motor_data;
+}ht_motor_data;
 
 
-class DM_motor : public motor_dev {
+class HT_motor : public motor_dev {
 
 public:
     /***--------------------------初始化------------------------------***/
-    DM_motor(CAN_HandleTypeDef *hcan_=&hcan1, can_rx_callback *callback_ = nullptr,
-             uint32_t rx_id = 0x000, uint32_t tx_id = 0x001, motor_type type_ = DM_J4310_2EC, dm_motor_mode mode_ = DM_MIT, uint8_t is_reverse = 0);
+    HT_motor(CAN_HandleTypeDef *hcan_=&hcan1, can_rx_callback *callback_ = nullptr,
+             uint32_t rx_id = 0x000, uint32_t tx_id = 0x001, ht_motor_type type_ = HT_8115_J9, uint8_t is_reverse = 0);
 
     /***--------------------------指令------------------------------***/
     bool motor_reset() override;                             //复位
     void motor_control(uint32_t cmd) override;
     float motor_get_current_rounds();   //获取当前绝对值编码器值，即不加圈数
-    void motor_error_protection();
 
 
 protected:
@@ -125,27 +109,25 @@ protected:
     void motor_set_rounds_forward(float rounds) override;    //单位 转子圈数
 
     /****------------------------------回执函数及其他---------------------------------***/
-    friend void dm_motor_rx_data_update_callback(can_device_receive *can_receive, uint8_t *data);
-    void set_dm_ctrl_to_can_tx_buff();
+    friend void ht_motor_rx_data_update_callback(can_device_receive *can_receive, uint8_t *data);
+    void set_ht_ctrl_to_can_tx_buff();
 
 protected:
     //basic
     bool is_lost;               //保护,初始化
     bool init_offset;        //校准标志,初始化
-    motor_type type;         //电机类型
-    dm_motor_mode mode;       //电机模式
+    ht_motor_type type;         //电机类型
     can_device_receive can_rx;
     can_device_transmit can_tx;
     uint8_t *default_data_tx;
-    uint8_t motor_num;        //该电机是第几个，从1计数，非0
     CAN_HandleTypeDef *hcan;
-
+    uint8_t motor_num;        //该电机是第几个，从1计数，非0
 
     //data
-    dm_motor_raw_data raw;    //原始数据,接收不用初始化
-    dm_motor_data data;          //电机解算数据,接收不用初始化
-    dm_motor_tx ctrl;
-    dm_motor_can_tx_buff tx_buff;
+    ht_motor_raw_data raw;    //原始数据,接收不用初始化
+    ht_motor_data data;          //电机解算数据,接收不用初始化
+    ht_motor_tx ctrl;
+    ht_motor_can_tx_buff tx_buff;
 
 
 public:
@@ -154,18 +136,16 @@ public:
 };
 
 
-float uint_to_float(int x_int, float x_min, float x_max, int bits);
-int float_to_uint(float x, float x_min, float x_max, int bits);
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 //C
-void DM_motor_service(void *argument);
-
+void HT_motor_service(void *argument);
 #ifdef __cplusplus
 }
 #endif
 //C++
 
-#endif //PEPPER_PICKER_GIMBAL_DM_MOTOR_DRIVER_H
+#endif //UNDERLYING_DRIVER_HT_MOTOR_DRIVER_H
